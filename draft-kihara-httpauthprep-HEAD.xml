@@ -6,31 +6,57 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="std" docName="draft-kihara-httpauthprep-HEAD" ipr="trust200902">
+<rfc category="std" docName="draft-oiwa-httpauthprep-HEAD" ipr="trust200902">
 
   <front>
 
-    <title abbrev="TBD: PRECIS for HTTP Authentication">TBD: PRECIS profile for HTTP Authentication</title>
+    <title abbrev="PRECIS for HTTP Authentication">HTTPAuthPrep: PRECIS profile for HTTP Authentication</title>
 
-    <!-- TBD: Authors -->
-    <author initials="G." surname="Nanashi" fullname="Gonbe Nanashi">
-      <organization>Organization</organization>
+    <author initials="Y." surname="Oiwa" fullname="Yutaka Oiwa">
+      <organization abbrev="RISEC, AIST">National Institute of Advanced Industrial Science and Technology</organization>
       <address>
-        <!--postal>
-          <street></street>
-          <city></city>
-          <region></region>
-          <code></code>
-          <country></country>
-        </postal-->
-        <!--phone></phone-->
-        <email>gnanashi@example.com</email>
+        <postal>
+          <street>Research Institute for Secure Systems</street>
+          <street>Tsukuba Central 2</street>
+          <street>1-1-1 Umezono</street>
+          <city>Tsukuba-shi</city>
+          <region>Ibaraki</region>
+          <country>Japan</country>
+        </postal>
+        <email>mutual-auth-contact-ml@aist.go.jp</email>
+      </address>
+    </author>
+    <author initials="T." surname="Nemoto" fullname="Takahiro Nemoto">
+      <organization abbrev="Keio University">Keio University</organization>
+      <address>
+        <postal>
+          <street>Graduate School of Media Design</street>
+          <street>4-1-1 Hiyoshi, Kohoku-ku</street>
+          <city>Yokohama</city>
+          <region>Kanagawa</region>
+          <code>223-8526</code>
+          <country>Japan</country>
+        </postal>
+        <email>t.nemo10@kmd.keio.ac.jp</email>
+      </address>
+    </author>
+    <author initials="B." surname="Kihara" fullname="Boku Kihara">
+      <organization abbrev="Lepidum">Lepidum Co. Ltd.</organization>
+      <address>
+        <postal>
+          <street>#602, Village Sasazuka 3</street>
+          <street>1-30-3 Sasazuka</street>
+          <city>Shibuya-ku</city>
+          <region>Tokyo</region>
+          <country>Japan</country>
+        </postal>
       </address>
     </author>
 
     <date/>
 
     <area>Applications</area>
+    <!-- TBD: workgroup -->
     <!--workgroup>PRECIS</workgroup-->
     <keyword>Username</keyword>
     <keyword>Password</keyword>
@@ -40,7 +66,7 @@
     <keyword>Internationalization</keyword>
 
     <abstract>
-      <t>TBD: Abstract.</t>
+      <t>This document describes how to handle Unicode strings representing user names and passwords for HTTP authentication.</t>
     </abstract>
 
   </front>
@@ -50,26 +76,90 @@
   <section title="Introduction" anchor="intro">
 
     <section title="Overview" anchor="overview">
-      <t>TBD: Overview, etc...</t>
+      <t>[[TBD: Overview, etc...]]</t>
     </section>
 
     <section title="Terminology" anchor="terms">
-      <t>TBD: Terminology</t>
+      <t>[[TBD: Terminology]]</t>
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target='RFC2119'/>.</t>
     </section>
 
   </section>
 
-  <section title='Foo' anchor='foo'>
-    <t>TBD: Contents here.</t>
+  <section title='User Names' anchor='username'>
+    <section title='Definition' anchor='username-definition'>
+      <t>User names are strings to identify the user in HTTP authentication.</t>
+      <figure>
+        <artwork><![CDATA[
+   username       = 1*(idpoint)
+                    ;
+                    ; an "idpoint" is a UTF-8 encoded 
+                    ; Unicode code point that conforms to
+                    ; the PRECIS "IdentifierClass"
+                    ;
+        ]]></artwork>
+      </figure>
+      <t>Note that some authentication schemes like Basic MAY restrict several characters to be used in username.</t>
+      <t>Note also that some authentication schemes like Digest modifies users' inputs to other forms like quoted-string.  This document specifies only string preparation.</t>
+    </section>
+    <section title='Preparation' anchor='username-preparation'>
+      <t>A user name MUST NOT be zero bytes in length.  This rule is to be enforced after any normalization and mapping of code points.</t>
+      <t>Each username MUST conform to the definition of the PRECIS IdentifierClass provided in <xref target='FRAMEWORK'/>, where the width mapping, additional mapping, case mapping, normalization, and directionality rules are as described below.</t>
+      <t>
+        <list style='numbers'>
+          <t>Fullwidth and halfwidth characters MUST be mapped to their decomposition equivalents.</t>
+          <t>Additional mappings MAY be applied, such as those defined in <xref target='I-D.ietf-precis-mappings'/>.</t>
+          <t>Case mapping is not applied.</t>
+          <t>Unicode Normalization Form C (NFC) MUST be applied to all characters.</t>
+        </list>
+      </t>
+      <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
+    </section>
+  </section>
+
+  <section title='Passwords' anchor='password'>
+    <section title='Definition' anchor='password-definition'>
+      <t>Passwords are strings to authenticate the user in HTTP authentication.</t>
+      <figure>
+        <artwork><![CDATA[
+   password       = 1*(freepoint)
+                    ;
+                    ; a "freepoint" is a UTF-8 encoded
+                    ; Unicode code point that conforms to
+                    ; the PRECIS "FreeformClass" 
+                    ;
+        ]]></artwork>
+      </figure>
+      <t>Note that some authentication schemes MAY restrict several characters to be used in passwords.</t>
+    </section>
+    <section title='Preparation' anchor='password-preparation'>
+      <t>A password MUST NOT be zero bytes in length.  This rule is to be enforced after any normalization and mapping of code points.</t>
+      <t>A password MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
+      <t>
+        <list style='numbers'>
+          <t>Width mapping is not applied.</t>
+          <t>Map any instances of non-ASCII space to ASCII space (U+0020).</t>
+          <t>Case mapping is not applied.</t>
+          <t>Apply Unicode Normalization Form C (NFC) to all characters.</t>
+          <t>Ensure that the resulting string conforms to the definition of the PRECIS FreeformClass.</t>
+        </list>
+      </t>
+      <t>With regard to directionality, the "Bidi Rule" (defined in <xref target='RFC5893'/>) and similar rules do not apply.</t>
+    </section>
+  </section>
+
+  <section title="Backword Compatibility" anchor="compatibility">
+    <t>Because HTTP/1.1 does not specify use of non-ASCII characters strictly, user agents tend to default to encodings other that UTF-8.  In such cases, preparation described in this document MUST NOT be applied.  Preparation MUST be applied only when the use of UTF-8 in the authentication is explicitly specified.</t>
+    <t>Migrating to preparation-aware systems may result in string inconsistency and thus login failures.</t>
+    <t>[[TBD: How to handle migration from ISO-8859-1? Old systems will accept any octets in ISO-8859-1 and the behavior might be needed in the new systems.]]</t>
   </section>
 
   <section title="Security Considerations" anchor="security">
-    <t>TBD: Security Considerations here.</t>
+    <t>[[TBD: Security Considerations here.]]</t>
   </section>
 
   <section title="IANA Considerations" anchor="iana">
-    <t>TBD: IANA Considerations here.</t>
+    <t>[[TBD: IANA Considerations here.]]</t>
   </section>
 
   </middle>
@@ -77,7 +167,22 @@
   <back>
 
     <references title="Normative References">
-      <reference><front><title>Normative Reference here.</title><author surname="TBD:"></author><date></date></front></reference>
+<reference anchor='FRAMEWORK'>
+<front>
+<title>Precis Framework: Handling Internationalized Strings in Protocols</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization>Cisco</organization>
+</author>
+<author initials='M' surname='Blanchet' fullname='Marc Blanchet'>
+    <organization>Viagenie</organization>
+</author>
+<date month='March' day='26' year='2013' />
+<abstract><t>Application protocols using Unicode code points in protocol strings need to prepare such strings in order to perform comparison operations (e.g., for purposes of authentication or authorization).  This document defines a framework enabling application protocols to handle various classes of strings in a way that depends on the properties of Unicode code points and that is agile with respect to versions of Unicode; as a result, this framework provides a more sustainable approach to the handling of internationalized strings than the previous framework, known as Stringprep (RFC 3454).  A specification that reuses this framework can either directly use the base string classes or subclass the base string classes as needed.  This framework takes an approach similar to the revised internationalized domain names in applications (IDNA) technology (RFC 5890, RFC 5891, RFC 5892, RFC 5893, RFC 5894) and thus adheres to the high-level design goals described in RFC 4690, albeit for application technologies other than the Domain Name System (DNS).  This document obsoletes RFC 3454.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-precis-framework-07' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-precis-framework-07.txt' />
+</reference>
 
 <reference anchor="RFC2119">
 <front>
@@ -119,14 +224,92 @@
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
 </reference>
 
+  <reference anchor="RFC2617">
+    <front>
+      <title abbrev="HTTP Authentication">HTTP Authentication: Basic and Digest Access Authentication</title>
+      <author initials="J." surname="Franks" fullname="John Franks">
+        <organization>Northwestern University, Department of Mathematics</organization>
+        <address><email>john@math.nwu.edu</email></address>
+      </author>
+      <author initials="P.M." surname="Hallam-Baker" fullname="Phillip M. Hallam-Baker">
+        <organization>Verisign Inc.</organization>
+        <address><email>pbaker@verisign.com</email></address>
+      </author>
+      <author initials="J.L." surname="Hostetler" fullname="Jeffery L. Hostetler">
+        <organization>AbiSource, Inc.</organization>
+        <address><email>jeff@AbiSource.com</email></address>
+      </author>
+      <author initials="S.D." surname="Lawrence" fullname="Scott D. Lawrence">
+        <organization>Agranat Systems, Inc.</organization>
+        <address><email>lawrence@agranat.com</email></address>
+      </author>
+      <author initials="P.J." surname="Leach" fullname="Paul J. Leach">
+        <organization>Microsoft Corporation</organization>
+        <address><email>paulle@microsoft.com</email></address>
+      </author>
+      <author initials="A." surname="Luotonen" fullname="Ari Luotonen">
+        <organization>Netscape Communications Corporation</organization>
+      </author>
+      <author initials="L." surname="Stewart" fullname="Lawrence C. Stewart">
+        <organization>Open Market, Inc.</organization>
+        <address><email>stewart@OpenMarket.com</email></address>
+      </author>
+      <date month="June" year="1999"/>
+    </front>
+    <seriesInfo name="RFC" value="2617"/>
+  </reference>
+        
+        <reference anchor='RFC5893'>
+        <front>
+          <title>Right-to-Left Scripts for Internationalized Domain Names for Applications (IDNA)</title>
+          <author initials='H.' surname='Alvestrand' fullname='H. Alvestrand'>
+            <organization />
+          </author>
+          <author initials='C.' surname='Karp' fullname='C. Karp'>
+            <organization />
+          </author>
+          <date year='2010' month='August' />
+          <abstract>
+            <t>The use of right-to-left scripts in Internationalized Domain Names (IDNs) has presented several challenges.  This memo provides a new Bidi rule for Internationalized Domain Names for Applications (IDNA) labels, based on the encountered problems with some scripts and some shortcomings in the 2003 IDNA Bidi criterion. [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name='RFC' value='5893' />
+        <format type='TXT' octets='38870' target='http://www.rfc-editor.org/rfc/rfc5893.txt' />
+      </reference>
+
+<reference anchor="UNICODE" target="http://www.unicode.org/versions/Unicode6.1.0/">
+  <front>
+    <title>The Unicode Standard, Version 6.1</title>
+    <author>
+      <organization>The Unicode Consortium</organization>
+    </author>
+    <date year="2012" />
+  </front>
+</reference>
+
     </references>
 
     <references title="Informative References">
-      <reference><front><title>Informative Reference here.</title><author surname="TBD:"></author><date></date></front></reference>
+<reference anchor='I-D.ietf-precis-mappings'>
+<front>
+<title>Mapping characters for PRECIS classes</title>
+<author initials='Y' surname='YONEYA' fullname='Yoshiro YONEYA'>
+    <organization />
+</author>
+<author initials='T' surname='NEMOTO' fullname='Takahiro NEMOTO'>
+    <organization />
+</author>
+<date month='December' day='26' year='2012' />
+<abstract><t>Preparation and comparison of internationalized strings ("PRECIS") Framework [I-D.ietf-precis-framework] is defining several classes of strings for preparation and comparison.  In the document, case mapping is defined because many of protocols handle case sensitive or case insensitive string comparison and therefore preparation of string is mandatory.  As described in IDNA mapping [RFC5895] and PRECIS problem statement [I-D.ietf-precis-problem-statement], mappings in internationalized strings are not limited to case, but also width, delimiters and/or other specials are taken into consideration.  This document considers mappings other than case mapping in PRECIS context.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-precis-mappings-01' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-precis-mappings-01.txt' />
+</reference>
     </references>
 
-    <section title="Bar" anchor="bar">
-      <t>TBD: Appendices here.</t>
+    <section title="Document History (to be removed)" anchor="history">
+      <t>Initial submit.</t>
     </section>
 
   </back>
